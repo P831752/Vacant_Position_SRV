@@ -3,36 +3,10 @@
 #    - This runs your entire CAP logic:
 #      fetch all Positions → find Vacancies → find Reportee counts
 ###################################################################
-POST http://localhost:4004/odata/v4/VacancyService/StartVacancyJob
+POST http://localhost:4004/odata/v4/VacancyService/GetPositionCodes
 Content-Type: application/json
 
 {
   "IC": "VALV",
   "EmpGroup": "E"
-}
-
-###################################################################
-# 2️⃣ Poll Job Status
-#    - Copy the jobId from previous response
-#    - Run this multiple times until status becomes "SUCCESS"
-###################################################################
-POST http://localhost:4004/odata/v4/VacancyService/GetJobStatus
-Content-Type: application/json
-
-{
-  "jobId": "ca372e6e-932b-4a15-acd5-aefb2dff67ef"
-}
-
-
-
-###################################################################
-# 3️⃣ Get Final Result
-#    - Use the same jobId
-#    - This returns the full vacancy list with reporteeCount
-###################################################################
-POST http://localhost:4004/odata/v4/VacancyService/GetJobResult
-Content-Type: application/json
-
-{
-  "jobId": "ec07164b-6de1-492e-8198-7b15a0bfc911"
 }

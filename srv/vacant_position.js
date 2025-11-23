@@ -10,29 +10,32 @@ module.exports = cds.service.impl(async function () {
     this.on("GetPositionCodes", async req => {
         const { IC, EmpGroup } = req.data;
 
-        let skip = 0;
-        const top = 1000;
-        let hasMore = true;
-        const allCodes = [];
+    let all = [];
+    let skip = 0;
+    const pageSize = 100;
 
-        while (hasMore) {
-            const { d } = await sf.send({
-                method: "GET",
-                path:
-                    `/odata/v2/Position?$top=${top}&$skip=${skip}`
-                    + `&$filter=businessUnit eq '${IC}' and cust_EmployeeGroup eq '${EmpGroup}' and effectiveStatus eq 'A'`
-                    + `&$select=code`
-            });
+    console.log(`Fetching Positions from SF...`);
 
-            if (!d || !d.results || d.results.length === 0) break;
+    while (true) {
+        const url =
+            `/odata/v2/Position?$skip=${skip}&$top=${pageSize}` +
+            `&$filter=businessUnit eq '${IC}' and cust_EmployeeGroup eq '${EmpGroup}' and effectiveStatus eq 'A'` +
+            `&$select=code,externalName_defaultValue,parentPosition/code` +
+            `&$expand=parentPosition`;
 
-            d.results.forEach(pos => allCodes.push(pos.code));
+        const res = await sf.send({ method: "GET", path: url });
+        const rows = res.d.results;
 
-            if (d.results.length < top) hasMore = false;
-            skip += top;
-        }
+        console.log(`Retrieved ${rows.length} rows (skip=${skip})`);
 
-        return { codes: allCodes };
+        all.push(...rows);
+
+        if (rows.length < pageSize) break;
+        skip += pageSize;
+    }
+
+    console.log(`Total Positions = ${all.length}`);
+    return all;
     });
 
 });

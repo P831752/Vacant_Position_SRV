@@ -7,7 +7,7 @@ service VacancyService @(path:'/odata/v4/VacancyService') {
         IC       : String,
         EmpGroup : String
     ) returns {
-        codes : String[];
+        codes : array of String;
     };
 
 }

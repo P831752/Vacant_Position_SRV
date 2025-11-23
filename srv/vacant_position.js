@@ -1,30 +1,54 @@
-this.on("GetPositionCodes", async req => {
-    const { IC, EmpGroup } = req.data;
+const cds = require("@sap/cds");
 
-    let all = [];
-    let skip = 0;
-    const pageSize = 100;
+module.exports = cds.service.impl(async function () {
 
-    console.log(`Fetching Positions from SF...`);
+    const sf = await cds.connect.to("sf_dest");
 
-    while (true) {
-        const url =
-            `/odata/v2/Position?$skip=${skip}&$top=${pageSize}` +
-            `&$filter=businessUnit eq '${IC}' and cust_EmployeeGroup eq '${EmpGroup}' and effectiveStatus eq 'A'` +
-            `&$select=code`;
+    // -----------------------------
+    // ACTION: GetPositionCodes
+    // -----------------------------
+    this.on("GetPositionCodes", async req => {
 
-        const res = await sf.send({ method: "GET", path: url });
-        const rows = res.d?.results || [];
+        const { IC, EmpGroup } = req.data;
 
-        console.log(`Retrieved ${rows.length} rows (skip=${skip})`);
+        let all = [];
+        let skip = 0;
+        const pageSize = 1000;
 
-        rows.forEach(r => all.push(r.code));
+        console.log(`📌 GetPositionCodes(IC=${IC}, EmpGroup=${EmpGroup})`);
+        console.log(`Fetching Positions from SF...`);
 
-        if (rows.length < pageSize) break;
-        skip += pageSize;
-    }
+        while (true) {
+            const url =
+                `/odata/v2/Position?$skip=${skip}&$top=${pageSize}` +
+                `&$filter=businessUnit eq '${IC}' and cust_EmployeeGroup eq '${EmpGroup}' and effectiveStatus eq 'A'` +
+                `&$select=code,externalName_defaultValue,effectiveStartDate,parentPosition/code` +
+                `&$expand=parentPosition`;
 
-    console.log(`Total Position Codes = ${all.length}`);
+            const res = await sf.send({ method: "GET", path: url });
+            const rows = res.d?.results ?? [];
 
-    return { codes: all };   // <-- IMPORTANT
+            console.log(`→ Retrieved ${rows.length} rows (skip=${skip})`);
+
+            all.push(...rows);
+
+            if (rows.length < pageSize) break;
+            skip += pageSize;
+        }
+
+        console.log(`✔ Total Positions Loaded = ${all.length}`);
+
+        // Return only needed fields (UI5 friendly)
+        const data = all.map(p => ({
+            code: p.code,
+            externalName: p.externalName_defaultValue || "",
+            startDate: p.effectiveStartDate || null,
+            parentPosition: p.parentPosition?.code || null
+        }));
+
+        console.log(`✔ Returning ${data.length} minimal-position objects`);
+
+        return { codes: data };
+    });
+
 });

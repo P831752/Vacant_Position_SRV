@@ -1,14 +1,5 @@
-const cds = require("@sap/cds");
-
-module.exports = cds.service.impl(async function () {
-
-    const sf = await cds.connect.to("sf_dest");
-
-    // -----------------------------
-    // ACTION: GetPositionCodes
-    // -----------------------------
-    this.on("GetPositionCodes", async req => {
-        const { IC, EmpGroup } = req.data;
+this.on("GetPositionCodes", async req => {
+    const { IC, EmpGroup } = req.data;
 
     let all = [];
     let skip = 0;
@@ -20,22 +11,20 @@ module.exports = cds.service.impl(async function () {
         const url =
             `/odata/v2/Position?$skip=${skip}&$top=${pageSize}` +
             `&$filter=businessUnit eq '${IC}' and cust_EmployeeGroup eq '${EmpGroup}' and effectiveStatus eq 'A'` +
-            `&$select=code,externalName_defaultValue,parentPosition/code` +
-            `&$expand=parentPosition`;
+            `&$select=code`;
 
         const res = await sf.send({ method: "GET", path: url });
-        const rows = res.d.results;
+        const rows = res.d?.results || [];
 
         console.log(`Retrieved ${rows.length} rows (skip=${skip})`);
 
-        all.push(...rows);
+        rows.forEach(r => all.push(r.code));
 
         if (rows.length < pageSize) break;
         skip += pageSize;
     }
 
-    console.log(`Total Positions = ${all.length}`);
-    return all;
-    });
+    console.log(`Total Position Codes = ${all.length}`);
 
+    return { codes: all };   // <-- IMPORTANT
 });

@@ -25,6 +25,15 @@ modules:
           srv-url: ${default-url}
     requires:
       - name: Vacant_Position_SRV-destination
+      - name: Vacant_Position_SRV-db
+
+  - name: Vacant_Position_SRV-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: Vacant_Position_SRV-db
 
 resources:
   - name: Vacant_Position_SRV-destination
@@ -32,3 +41,8 @@ resources:
     parameters:
       service: destination
       service-plan: lite
+  - name: Vacant_Position_SRV-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared

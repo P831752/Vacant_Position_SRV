@@ -1,9 +1,9 @@
 const cds = require("@sap/cds");
 
 module.exports = cds.service.impl(async function () {
-
+    
     const sf = await cds.connect.to("sf_dest");
-
+    const { Position_Exclude } = this.entities;
     // -----------------------------
     // ACTION: GetPositionCodes
     // -----------------------------
@@ -61,5 +61,20 @@ module.exports = cds.service.impl(async function () {
 
         return { codes: data };
     });
+
+    this.on("PositionExclude", async req => {
+        const vacancies = req.data.vacancies;
+
+        try {
+            await INSERT.into(Position_Exclude).entries(vacancies);
+            return { 
+                status: "OK", 
+                count: vacancies.length 
+            }
+
+        } catch (error) {
+            req.error(500, "Failed to save positions: " + error.message);
+      };
+  });
 
 });

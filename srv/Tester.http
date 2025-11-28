@@ -6,3 +6,20 @@ Content-Type: application/json
   "EmpGroup": "E"
 }
 
+####
+POST http://localhost:4004/odata/v4/VacancyService/PositionExclude
+Content-Type: application/json
+
+{
+  
+  "vacancies": [
+    {
+      "positionCode": "4",
+      "positionName": "E"
+    },
+    {
+      "positionCode": "3",
+      "positionName": "E"
+    }
+  ]
+}
